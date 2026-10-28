@@ -11,7 +11,7 @@ const END_H = 20;
 const HOUR_PX = 30;
 
 /**
- * "Your week": seven columns, Monday to Sunday, the opening hours down the side, every booking drawn to scale.
+ * "Week plan": seven columns, Monday to Sunday, the opening hours down the side, every booking drawn to scale.
  * Desks are hatched in cobalt along the left of the day (the baseline), rooms, booths and studios are solid blocks on
  * the right. Tapping a block picks it in the list below.
  */

@@ -11,7 +11,7 @@ premium the way a good building is, not the way a luxury brand is.
 |---|---|
 | **Sheet** with a number (`GA-104`) and a title strip | Every page section. The strip runs across the top with the sheet number in a boxed cell, the sheet title, grid references A–F, and a note (a count, a scale) on the right. |
 | **Title block** (the boxed table in the corner) | Every summary: the day sheet total, a space's data sheet, order details, the footer. |
-| **Hatching** (45° lines = cut material) | Occupied time on the day sheet, booked blocks in "Your week", sold-out days, busy tags. |
+| **Hatching** (45° lines = cut material) | Occupied time on the day sheet, booked blocks in "Week plan", sold-out days, busy tags. |
 | **Dimension line** `├── 2 h ──┤` | Booking length, opening hours, any span. It stretches when the length chip changes. |
 | **Plan symbols** (a room with a door swing, a bench with chairs) | The icon for each kind of space; the locator showing where a space is in the house. |
 | **The highlighter** (marigold) | The one thing you chose: the selected time, the selected chip's underline, the active nav link. |
@@ -82,7 +82,7 @@ the day sheet's gaps and in "fits better" swaps.
 - **Thank-you = the printed Day sheet**: a drawing sheet with a title block (reference, house, date), the day's
   timeline, a wayfinding locator with a dashed route from the entrance, arrival notes and Wi-Fi, add to calendar,
   invite guests, book again.
-- **Account = "Your week"**: a seven-column week board with each booking as a hatched block, above an upcoming list
+- **Account = "Week plan"**: a seven-column week board with each booking as a hatched block, above an upcoming list
   with change time, extend, add guests, cancel and rebook.
 
 ## How this differs from every other template
@@ -96,6 +96,6 @@ the day sheet's gaps and in "fits better" swaps.
 | **Section rhythm** | Numbered sheets with a title strip and grid references; schedules (shared-border grids, tables) instead of card rows | Eyebrow pill → H2 → three cards (Clarity, HAAR), paper/green bands (Frisør), full-bleed dark bands (VOLT) |
 | **Booking interaction** | Search-results planner: query bar → fitting spaces → inline day column; multi-item **day sheet timeline** with upsell in its gaps | VOLT hall map + court grid, Frisør 3-step menu + "Your chair", Tensile class sheet, Alba chair-time track; step accordions + sticky summary card elsewhere |
 | **Confirmation artifact** | The printed **Day sheet** with a wayfinding route drawn from the front door | Tickets (VOLT, earlier templates), flippable appointment card (Alba), oval cartouche label (Frisør) |
-| **Account** | "Your week" board with hatched blocks | Ticket list (VOLT), recall ring (Alba), sticker book (Alba Kids) |
+| **Account** | "Week plan" board with hatched blocks | Ticket list (VOLT), recall ring (Alba), sticker book (Alba Kids) |
 | **Motion** | Draw-on lines, dimension stretch, hatch sweep, highlighter wipe | The shared motion kit (reveals, parallax, marquee, Lenis, page wipes), Alba's gleam/aperture/split-flap |
 | **Shapes** | 2px corners, rectangular buttons, ink frames, no shadows | Pills (Clarity/HAAR), 2px outline + offset sticker shadows (Fluently), square keyline buttons (Frisør) |

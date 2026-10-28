@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 const mondayOf = (date: string) => moment(date).isoWeekday(1).format('YYYY-MM-DD');
 
 /**
- * /account — "Your week" board on top, then what's coming up (change time, stay longer, invite, cancel) and what's
+ * /account — "Week plan" board on top, then what's coming up (change time, stay longer, invite, cancel) and what's
  * past (book again). `fixtures` renders the preview without an API.
  */
 export function BookingsView({ cat, fixtures, focus }: { cat: Catalogue; fixtures?: Booking[]; focus?: { id: string; action: string | null } | null }) {
@@ -61,10 +61,10 @@ export function BookingsView({ cat, fixtures, focus }: { cat: Catalogue; fixture
 
 	return (
 		<div className="flex flex-col gap-10">
-			<section aria-label="Your week">
+			<section aria-label="Week plan">
 				<div className="mb-3 flex flex-wrap items-end justify-between gap-3">
 					<div>
-						<h2 className="t-h2">Your week</h2>
+						<h2 className="t-h2">Week plan</h2>
 						<p className="t-label mt-1 text-mute">
 							{moment(week).format('D MMM')} – {moment(week).add(6, 'day').format('D MMM YYYY')} · {weekCount} {weekCount === 1 ? 'booking' : 'bookings'}
 						</p>
