@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Preview', robots: { index: false } }
 const SCREENS = [
 	{ key: 'thank-you', label: 'Confirmation: the day sheet printout (pay at the house)' },
 	{ key: 'thank-you-paid', label: 'Confirmation, paid by card' },
-	{ key: 'account', label: 'Account: your week + coming up (actions don’t write)' },
+	{ key: 'account', label: 'Account: week plan + coming up (actions don’t write)' },
 ];
 
 /**
