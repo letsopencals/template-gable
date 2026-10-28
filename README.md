@@ -4,7 +4,7 @@ A production-ready booking website for a coworking network: desks, meeting rooms
 
 **[View Live Demo →](https://template-gable.vercel.app)**
 
-![Gable — the day planner on a laptop and the day sheet on a phone](docs/cover.png)
+![Gable — the homepage: six houses, one booking](docs/homepage-hero.png)
 
 Gable is a fictional network of six workspaces in restored buildings in Dublin, Cork and Galway. The site is drawn as the architect's drawing set for those buildings. Every section is a numbered sheet, every summary is a title block, booking lengths are dimension lines and booked time is hatched like a cut wall. The booking model is "plan your day": put a desk, a room for the 11 o'clock and a booth for the call after on one **day sheet**, and check out once. Extras and upgrades are suggested in the gaps of that day. MIT licensed: clone it, rebrand it, ship it.
 
