@@ -1,0 +1,303 @@
+@import 'tailwindcss';
+
+/*
+ * Gable — "Drawing set".
+ * Every page is a sheet from an architect's drawing set: hairline frames, sheet numbers, grid references,
+ * hatching for occupied time, dimension lines for durations, a title block for every summary.
+ * Read DESIGN.md before adding a colour, a radius or an animation.
+ */
+@theme {
+	/* Surfaces */
+	--color-paper: #f6f6f2; /* page */
+	--color-paper-deep: #ecece5; /* bands, hover rows */
+	--color-sheet: #ffffff; /* cards, sheets, fields */
+
+	/* Ink */
+	--color-ink: #121633; /* blue-black ink */
+	--color-ink-soft: #2a2f55;
+	--color-mute: #5c6182; /* secondary text */
+	--color-faint: #8d91aa; /* captions, disabled */
+	--color-line: #d9dce6; /* hairlines */
+	--color-line-strong: #b9bed0;
+
+	/* Brand */
+	--color-cobalt: #2a44d4; /* primary */
+	--color-cobalt-deep: #18268c;
+	--color-cobalt-ink: #0f1a66;
+	--color-wash: #e7ebfa; /* cobalt wash */
+	--color-marigold: #f4b63f; /* highlighter: the chosen time / selection */
+	--color-marigold-soft: #fbe3ae;
+	--color-free: #16a06a;
+	--color-free-wash: #dcf2e8;
+	--color-alert: #c43d2b;
+
+	--font-display: var(--font-bricolage), 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-onest), 'Onest', ui-sans-serif, system-ui, sans-serif;
+	--font-mono: var(--font-azeret), 'Azeret Mono', ui-monospace, monospace;
+
+	--radius-xs: 2px;
+	--radius-sm: 3px;
+	--radius-md: 4px;
+
+	--ease-draft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+		scroll-padding-top: 7.5rem;
+	}
+	body {
+		background: var(--color-paper);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+		font-size: 16px;
+		line-height: 1.55;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-family: var(--font-display);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		line-height: 1.02;
+		text-wrap: balance;
+	}
+	p {
+		text-wrap: pretty;
+	}
+	::selection {
+		background: var(--color-marigold-soft);
+		color: var(--color-ink);
+	}
+	:focus-visible {
+		outline: 2px solid var(--color-cobalt);
+		outline-offset: 2px;
+	}
+	button {
+		cursor: pointer;
+	}
+	button:disabled {
+		cursor: not-allowed;
+	}
+	input,
+	textarea,
+	select {
+		font: inherit;
+	}
+}
+
+/* ---------- Type scale ---------- */
+@utility t-hero {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(2.75rem, 7.2vw, 6.5rem);
+	line-height: 0.94;
+	letter-spacing: -0.035em;
+}
+@utility t-h1 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(2.25rem, 4.6vw, 4rem);
+	line-height: 0.98;
+	letter-spacing: -0.03em;
+}
+@utility t-h2 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(1.75rem, 3.1vw, 2.75rem);
+	line-height: 1.02;
+	letter-spacing: -0.025em;
+}
+@utility t-h3 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+	line-height: 1.1;
+	letter-spacing: -0.015em;
+}
+@utility t-lead {
+	font-size: clamp(1.0625rem, 1.25vw, 1.25rem);
+	line-height: 1.5;
+	color: var(--color-mute);
+}
+/* Drawing annotations: sheet numbers, grid refs, dimensions, table figures. */
+@utility t-label {
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+@utility t-num {
+	font-family: var(--font-mono);
+	font-feature-settings: 'tnum' 1;
+	letter-spacing: -0.01em;
+}
+
+/* ---------- Hatching (occupied time, cut walls) ---------- */
+@utility hatch {
+	background-image: repeating-linear-gradient(
+		-45deg,
+		color-mix(in srgb, var(--color-ink) 34%, transparent) 0 1px,
+		transparent 1px 6px
+	);
+}
+@utility hatch-light {
+	background-image: repeating-linear-gradient(
+		-45deg,
+		color-mix(in srgb, var(--color-ink) 16%, transparent) 0 1px,
+		transparent 1px 7px
+	);
+}
+@utility hatch-cobalt {
+	background-image: repeating-linear-gradient(
+		-45deg,
+		color-mix(in srgb, var(--color-cobalt) 55%, transparent) 0 1px,
+		transparent 1px 5px
+	);
+}
+@utility hatch-cross {
+	background-image:
+		repeating-linear-gradient(-45deg, color-mix(in srgb, var(--color-ink) 18%, transparent) 0 1px, transparent 1px 8px),
+		repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-ink) 18%, transparent) 0 1px, transparent 1px 8px);
+}
+/* Fine drafting grid behind plans and empty states. */
+@utility drafting-grid {
+	background-image:
+		linear-gradient(color-mix(in srgb, var(--color-cobalt) 9%, transparent) 1px, transparent 1px),
+		linear-gradient(90deg, color-mix(in srgb, var(--color-cobalt) 9%, transparent) 1px, transparent 1px);
+	background-size: 24px 24px;
+}
+
+/* ---------- Marigold highlighter (the chosen time / selection) ---------- */
+@utility highlight {
+	background-image: linear-gradient(transparent 58%, var(--color-marigold) 58%, var(--color-marigold) 92%, transparent 92%);
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	padding-inline: 0.08em;
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+.highlight-wipe {
+	background-image: linear-gradient(transparent 58%, var(--color-marigold) 58%, var(--color-marigold) 92%, transparent 92%);
+	background-repeat: no-repeat;
+	background-size: 0% 100%;
+	transition: background-size 420ms var(--ease-draft);
+}
+.highlight-wipe[data-on='true'],
+.highlight-wipe:hover {
+	background-size: 100% 100%;
+}
+
+/* ---------- Sheet frame ---------- */
+.sheet-frame {
+	position: relative;
+	border: 1px solid var(--color-line-strong);
+	background: var(--color-sheet);
+}
+/* Registration ticks at the four corners of a sheet. */
+.sheet-ticks {
+	position: relative;
+}
+.sheet-ticks::before,
+.sheet-ticks::after {
+	content: '';
+	position: absolute;
+	width: 11px;
+	height: 11px;
+	pointer-events: none;
+	border-color: var(--color-ink);
+	border-style: solid;
+}
+.sheet-ticks::before {
+	top: -1px;
+	left: -1px;
+	border-width: 1.5px 0 0 1.5px;
+}
+.sheet-ticks::after {
+	bottom: -1px;
+	right: -1px;
+	border-width: 0 1.5px 1.5px 0;
+}
+
+/* ---------- Title block (summary tables in the corner of every drawing) ---------- */
+.title-block {
+	display: grid;
+	border: 1px solid var(--color-ink);
+	background: var(--color-sheet);
+}
+.title-block > .tb-row {
+	display: grid;
+	grid-template-columns: minmax(6.5rem, 34%) 1fr;
+	border-top: 1px solid var(--color-line-strong);
+}
+.title-block > .tb-row:first-child {
+	border-top: 0;
+}
+.title-block .tb-key {
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-mute);
+	padding: 0.55rem 0.7rem;
+	border-right: 1px solid var(--color-line-strong);
+}
+.title-block .tb-val {
+	padding: 0.5rem 0.7rem;
+	font-size: 0.875rem;
+	min-width: 0;
+}
+
+/* ---------- Dimension lines ---------- */
+.dim-line {
+	transition: width 520ms var(--ease-draft);
+}
+.draw-on {
+	stroke-dasharray: var(--len, 1200);
+	stroke-dashoffset: var(--len, 1200);
+	animation: draw-on 1100ms var(--ease-draft) forwards;
+}
+@keyframes draw-on {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+/* Hatch sweeping in when a block becomes occupied. */
+.hatch-sweep {
+	animation: hatch-sweep 600ms var(--ease-draft) both;
+}
+@keyframes hatch-sweep {
+	from {
+		clip-path: inset(0 100% 0 0);
+	}
+	to {
+		clip-path: inset(0 0 0 0);
+	}
+}
+
+/* ---------- Misc ---------- */
+.no-scrollbar {
+	scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+		scroll-behavior: auto !important;
+	}
+	.draw-on {
+		stroke-dashoffset: 0;
+	}
+}
