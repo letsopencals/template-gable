@@ -53,7 +53,7 @@ export function ThankYouView({ cat, bookings, receipt, preview }: { cat: Catalog
 						You’re booked{firstName ? <>, <span className="highlight">{firstName}</span></> : null}.
 					</h1>
 					<p className="t-lead mt-3 max-w-2xl">
-						{bookings.length === 1 ? 'Your booking is' : `All ${bookings.length} bookings are`} confirmed{receipt.email ? <> and on the way to <strong className="font-medium text-ink">{receipt.email}</strong></> : null}. {payLine}
+						{bookings.length === 1 ? 'Your booking is' : bookings.length === 2 ? 'Both bookings are' : `All ${bookings.length} bookings are`} confirmed{receipt.email ? <> and on the way to <strong className="font-medium text-ink">{receipt.email}</strong></> : null}. {payLine}
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
