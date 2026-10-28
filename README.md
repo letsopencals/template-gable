@@ -28,7 +28,6 @@ In **User Account Settings** in the Opencals dashboard, generate a **private sto
 |----------|-------|
 | `OPENCALS_API_KEY` | Your private storefront key (starts with `spk_`) |
 | `AUTH_SECRET` | Any random string, used for session encryption |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | *(optional)* Stripe publishable key, if the API doesn't return one |
 | `GABLE_PREVIEW` | *(optional)* `1` serves the `/preview` fixture screens in production |
 
 ---
