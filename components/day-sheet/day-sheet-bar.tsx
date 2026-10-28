@@ -42,7 +42,7 @@ export function DaySheetBar({ cat, sheet, ranges, houseId, className }: { cat: C
 			</div>
 			<Drawer open={open} onClose={() => setOpen(false)} title="Day sheet" number="DS-01" side="bottom">
 				<div className="p-3">
-					<DaySheet cat={cat} sheet={sheet} ranges={ranges} houseId={houseId} />
+					<DaySheet cat={cat} sheet={sheet} ranges={ranges} houseId={houseId} inDrawer />
 				</div>
 			</Drawer>
 		</>

@@ -26,6 +26,7 @@ export function DaySheet({
 	houseId,
 	checkoutHref = '/checkout',
 	showCheckout = true,
+	inDrawer = false,
 	className,
 }: {
 	cat: Catalogue;
@@ -34,6 +35,8 @@ export function DaySheet({
 	ranges?: HouseRanges;
 	houseId?: string | null;
 	checkoutHref?: string;
+	/** Inside the phone drawer, whose own title already says "Day sheet" */
+	inDrawer?: boolean;
 	showCheckout?: boolean;
 	className?: string;
 }) {
@@ -46,7 +49,7 @@ export function DaySheet({
 		<div className={cn('title-block min-w-0 [grid-template-columns:minmax(0,1fr)]', className)}>
 			<div className="flex items-stretch border-b border-ink">
 				<div className="flex-1 px-3 py-2.5">
-					<p className="font-display text-[1.0625rem] font-semibold leading-tight">Day sheet</p>
+					{inDrawer ? null : <p className="font-display text-[1.0625rem] font-semibold leading-tight">Day sheet</p>}
 					<p className="text-[0.75rem] text-mute">{sheet.count ? `${sheet.count} ${sheet.count === 1 ? 'booking' : 'bookings'}, one checkout` : 'Nothing on it yet'}</p>
 				</div>
 				<HoldTimer seconds={sheet.timeRemaining} onExtend={sheet.extendCart} hidden={!sheet.count} />
