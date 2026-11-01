@@ -3,7 +3,7 @@
  * the confirmation, or an appointment in the account. Pure functions, safe on the server and the client; everything
  * comes from the API objects, matched against the catalogue (houses + spaces).
  */
-import type { CartItem, CartResponse, OrderDetailResponse } from '@opencals/storefront-sdk';
+import type { CartItem, CartResponse, OrderDetailResponse, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
 import { houseBySlug, spaceBySlug, type Catalogue, type House, type Space } from '@/lib/workspace';
 import { isoToMin } from '@/lib/workspace-time';
 
@@ -12,6 +12,8 @@ export interface AppointmentLike {
 	id: string;
 	name: string;
 	status: string;
+	/** Why a pending booking waits; absent (or null) once it's confirmed */
+	pendingReason?: PendingReason | null;
 	from: string;
 	to: string;
 	productId?: string;
@@ -53,6 +55,8 @@ export interface Booking {
 	/** "#2041" */
 	ref: string;
 	status: string;
+	/** 'awaiting_payment' / 'awaiting_approval' while it waits to be confirmed, otherwise null */
+	awaiting: PendingReason | null;
 	space: Space | null;
 	house: House | null;
 	/** Space name even when the catalogue doesn't know it */
@@ -78,6 +82,24 @@ export interface Booking {
 	allowReschedule: boolean;
 }
 
+export type PendingReason = StorefrontAppointmentPendingReason;
+
+/**
+ * A booking waits only while it's pending *with* a reason. Right after checkout a booking on a house that confirms
+ * everything is briefly pending with no reason (a background job confirms it): that one is confirmed.
+ */
+export function awaitingOf(a: { status?: string | null; pendingReason?: PendingReason | null }): PendingReason | null {
+	if ((a.status ?? '').toLowerCase() !== 'pending') return null;
+	return a.pendingReason === 'awaiting_payment' || a.pendingReason === 'awaiting_approval' ? a.pendingReason : null;
+}
+
+/** The one reason a whole order waits for: payment first (it decides the rest), then approval. */
+export function orderAwaiting(bookings: Pick<Booking, 'awaiting'>[]): PendingReason | null {
+	if (bookings.some((b) => b.awaiting === 'awaiting_payment')) return 'awaiting_payment';
+	if (bookings.some((b) => b.awaiting === 'awaiting_approval')) return 'awaiting_approval';
+	return null;
+}
+
 const MEETING_Q = /door screen|meeting name|meeting title/i;
 
 export function toBooking(a: AppointmentLike, cat: Catalogue, extra?: Partial<Booking>): Booking {
@@ -91,6 +113,7 @@ export function toBooking(a: AppointmentLike, cat: Catalogue, extra?: Partial<Bo
 		itemId: null,
 		ref: (a.name ?? '').replace(/^#/, ''),
 		status: (a.status ?? '').toLowerCase(),
+		awaiting: awaitingOf(a),
 		space,
 		house,
 		name: space?.name ?? a.product.variantTitle ?? a.product.title,
@@ -156,12 +179,14 @@ export function orderBookings(order: OrderDetailResponse, cat: Catalogue): Booki
 		.sort((a, b) => a.start - b.start);
 }
 
-/** What's paid or owed on an order. */
-export function orderReceipt(order: OrderDetailResponse): { paid: boolean; due: number; paidTotal: number; ref: string; email: string | null } {
+/** What's paid or owed on an order. A voided order was cancelled before anything was paid: nothing is due. */
+export function orderReceipt(order: OrderDetailResponse): { paid: boolean; voided: boolean; due: number; paidTotal: number; ref: string; email: string | null } {
 	const paid = !!order.isFullyPaid || order.paymentStatus === 'paid';
+	const voided = order.paymentStatus === 'voided';
 	return {
 		paid,
-		due: paid ? 0 : (order.dueToPay ?? order.total),
+		voided,
+		due: paid || voided ? 0 : (order.dueToPay ?? order.total),
 		paidTotal: order.paidTotal || (paid ? order.total : 0),
 		ref: (order.name ?? '').replace(/^#/, ''),
 		email: order.customer?.email ?? order.customerEmail ?? null,

@@ -121,10 +121,15 @@ availability per day or per space from the client.** `/api/book`, cancel, resche
   extras, discounts, hold timer, total; suggestions come from `lib/upsell.ts` (desk around meetings, booth in a
   gap, lunch/coffee, bigger room swap, parking). Phone: `day-sheet-bar.tsx` + drawer.
 - `/checkout` → `components/checkout/checkout-view.tsx` + `hooks/use-checkout.ts` (save customer → save answers
-  `{questionId, question, answer}` → start → submit with `markAsScheduled` → checkout-token sign-in). Guests
-  (meeting invitees) are appointment guests.
+  `{questionId, question, answer}` → start → submit → checkout-token sign-in). After start it follows the method's
+  `checkoutMode` (`internal` card form, `redirect`, `manual`/`none` submit at once); 409 `CHECKOUT_IN_PROGRESS` is
+  retried, `CART_EXPIRED` empties the sheet with a message, `CART_ALREADY_CHECKED_OUT` re-submits to get the order,
+  402 `PAYMENT_NOT_AUTHORIZED` keeps the card form. Guests (meeting invitees) are appointment guests.
 - `/thank-you` → `components/confirmation/*` (day printout with the section drawing `house-section.tsx`, invite
-  guests, .ics from `lib/ics.ts`). A snapshot (`lib/day-snapshot.ts`) lets guests see it after checkout.
+  guests, .ics from `lib/ics.ts`). A snapshot (`lib/day-snapshot.ts`) lets guests see it after checkout and keeps the
+  provider and `paymentInstructions` (bank details / invoice link) that only submit returns. "Awaiting payment /
+  confirmation" only when an appointment is `pending` with a `pendingReason` (`awaitingOf` in `lib/booking.ts`);
+  payment copy per provider lives in `lib/payment-copy.ts`.
 - `/account` → `components/account/*`: the **Week plan** board (`week-board.tsx`), coming up with change time /
   stay longer / invite / cancel (`booking-actions.tsx`), receipts, profile. `lib/booking.ts` reads cart items,
   orders and appointments as one `Booking` shape. Email links to `/account/appointments/[id](/view)` redirect to

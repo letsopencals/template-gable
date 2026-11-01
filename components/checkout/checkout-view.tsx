@@ -38,7 +38,13 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 				<SheetStrip number="GA-300" title="Checkout" />
 				<div className="drafting-grid mt-8 border border-line-strong px-6 py-16 text-center">
 					<h1 className="t-h2">Your day sheet is empty</h1>
-					<p className="t-lead mx-auto mt-3 max-w-md">Holds last 15 minutes. If yours ran out, the spaces are probably still free: plan the day again.</p>
+					{c.error ? (
+						<p role="alert" className="mx-auto mt-4 max-w-md border-l-2 border-alert bg-sheet px-4 py-3 text-left text-[0.9375rem]">
+							{c.error}
+						</p>
+					) : (
+						<p className="t-lead mx-auto mt-3 max-w-md">Holds last 15 minutes. If yours ran out, the spaces are probably still free: plan the day again.</p>
+					)}
 					<Link href="/book" className={cn(buttonClasses('primary', 'lg'), 'mt-6')}>
 						Plan your day
 					</Link>
@@ -48,7 +54,7 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 	}
 
 	const card = c.chosen?.checkoutMode === 'internal' || c.chosen?.checkoutMode === 'redirect';
-	const confirmLabel = card ? `Continue to payment` : sheet.total > 0 ? 'Confirm, pay at the house' : 'Confirm booking';
+	const confirmLabel = card ? `Continue to payment` : sheet.total > 0 ? confirmFor(c.chosen?.name) : 'Confirm booking';
 	const set = (k: keyof typeof c.details) => (e: React.ChangeEvent<HTMLInputElement>) => c.setDetails({ ...c.details, [k]: k === 'marketing' ? e.target.checked : e.target.value });
 
 	return (
@@ -199,6 +205,20 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 			) : null}
 		</div>
 	);
+}
+
+/** The confirm button for a method that takes no card here: say how the money will actually move. */
+function confirmFor(provider: string | undefined): string {
+	switch (provider) {
+		case 'cash':
+			return 'Confirm, pay at the house';
+		case 'bank_transfer':
+			return 'Confirm, pay by bank transfer';
+		case 'stripe_invoice':
+			return 'Confirm, pay by invoice';
+		default:
+			return 'Confirm booking';
+	}
 }
 
 function Step({ n, title, aside, children }: { n: string; title: string; aside?: ReactNode; children: ReactNode }) {

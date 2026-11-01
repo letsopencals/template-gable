@@ -1,3 +1,4 @@
+import type { PaymentInstructions } from '@opencals/storefront-sdk';
 import type { Booking } from '@/lib/booking';
 
 /**
@@ -12,7 +13,10 @@ export interface DaySnapshot {
 	firstName: string | null;
 	email: string | null;
 	total: number;
-	payAtHouse: boolean;
+	/** Payment method chosen at checkout (stripe, cash, bank_transfer, stripe_invoice, no_payment_required, …) */
+	provider: string | null;
+	/** Bank details / invoice link from submit, for manual methods with something still to pay. The order never has them. */
+	instructions: PaymentInstructions | null;
 }
 
 const KEY = 'gable:day-snapshot';
@@ -35,7 +39,9 @@ export function readSnapshot(): DaySnapshot | null {
 		const raw = sessionStorage.getItem(KEY);
 		if (!raw) return null;
 		const s = JSON.parse(raw) as DaySnapshot;
-		return Date.now() - s.at < 6 * 3600e3 ? s : null;
+		if (Date.now() - s.at >= 6 * 3600e3) return null;
+		// A snapshot from before bookings carried `awaiting`: treat its bookings as confirmed.
+		return { ...s, provider: s.provider ?? null, instructions: s.instructions ?? null, bookings: (s.bookings ?? []).map((b) => ({ ...b, awaiting: b.awaiting ?? null })) };
 	} catch {
 		return null;
 	}

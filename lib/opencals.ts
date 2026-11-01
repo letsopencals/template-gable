@@ -7,5 +7,7 @@ setupOpencals({
 	// IP on mutations (sign-in, cart, checkout), so the API rate-limits per visitor instead of per server.
 	apiKey: process.env.OPENCALS_API_KEY,
 	buyerIp: nextBuyerIp,
+	// Failed calls throw OpencalsApiError (caught by each route's handleApiError) instead of resolving with no data.
+	throwOnError: true,
 	logging: process.env.NODE_ENV === 'development',
 });

@@ -2,20 +2,20 @@ import { Fragment } from 'react';
 import { TitleBlock } from '@/components/ui/title-block';
 import { PlanIcon } from '@/components/ui/plan-icon';
 import { HouseSection } from '@/components/confirmation/house-section';
-import type { Booking } from '@/lib/booking';
+import type { Booking, PendingReason } from '@/lib/booking';
+import { payRow, type PaymentState } from '@/lib/payment-copy';
 import { kindByKey } from '@/lib/site-config';
 import { formatMoney } from '@/lib/money';
 import { formatLength, type Catalogue, type Space } from '@/lib/workspace';
 import { at, dayStart, localDay } from '@/lib/workspace-time';
 import { cn } from '@/lib/utils';
 
-export interface PrintoutReceipt {
+export interface PrintoutReceipt extends PaymentState {
 	ref: string;
-	paid: boolean;
-	total: number;
-	due: number;
 	email: string | null;
 	name: string | null;
+	/** What the order still waits for, or null when it's confirmed */
+	awaiting?: PendingReason | null;
 }
 
 /**
@@ -93,7 +93,8 @@ export function DayPrintout({ cat, bookings, receipt, currency, className }: { c
 							{ k: 'Bookings', v: String(bookings.length) },
 							{ k: 'Booked by', v: receipt.name ?? receipt.email ?? '—' },
 							{ k: 'Total', v: <span className="t-num">{formatMoney(receipt.total, currency)}</span> },
-							{ k: 'Payment', v: receipt.paid ? 'Paid' : receipt.total > 0 ? <span>{formatMoney(receipt.due, currency)} at the front desk</span> : 'Nothing to pay' },
+							{ k: 'Status', v: receipt.awaiting === 'awaiting_payment' ? 'Awaiting payment' : receipt.awaiting === 'awaiting_approval' ? 'Awaiting confirmation' : 'Confirmed' },
+							{ k: 'Payment', v: payRow(receipt, currency) },
 							{ k: 'Drawn', v: <span className="t-num">{at(Math.floor(Date.now() / 60000), tz, 'DD.MM.YY HH:mm')}</span> },
 						]}
 					/>

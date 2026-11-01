@@ -29,12 +29,11 @@ export function OrdersView() {
 			</thead>
 			<tbody>
 				{orders.map((o) => {
-					const paid = o.paymentStatus === 'paid';
 					return (
 						<tr key={o.id} className="border-b border-line last:border-b-0">
 							<td className="t-num px-3 py-3">{o.name}</td>
 							<td className="t-num px-3 py-3 text-mute">{at(isoToMin(o.createdAt), 'Europe/Dublin', 'D MMM YYYY')}</td>
-							<td className="hidden px-3 py-3 sm:table-cell">{paid ? <Tag tone="free">Paid</Tag> : <Tag tone="marigold">Pay at the house</Tag>}</td>
+							<td className="hidden px-3 py-3 sm:table-cell"><PaymentTag status={o.paymentStatus} /></td>
 							<td className="t-num px-3 py-3 text-right">{formatMoney(o.total, o.paymentCurrencyCode || currency)}</td>
 							<td className="px-3 py-3 text-right">
 								<Link href={`/thank-you?orderId=${o.id}`} className="text-[0.875rem] font-medium text-cobalt underline underline-offset-4">
@@ -47,4 +46,18 @@ export function OrdersView() {
 			</tbody>
 		</table>
 	);
+}
+
+/** Every payment status the API sends, never a raw value. Unpaid doesn't say how: that depends on the method. */
+function PaymentTag({ status }: { status: OrderListItemResponse['paymentStatus'] }) {
+	switch (status) {
+		case 'paid':
+			return <Tag tone="free">Paid</Tag>;
+		case 'partially-paid':
+			return <Tag tone="marigold">Part paid</Tag>;
+		case 'voided':
+			return <Tag tone="busy">Cancelled — not charged</Tag>;
+		default:
+			return <Tag tone="marigold">To pay</Tag>;
+	}
 }

@@ -164,7 +164,7 @@ function Row({ b, tz, selected, onAction }: { b: Booking; tz: string; selected: 
 				<div className="flex flex-wrap items-center gap-2">
 					{b.space ? <PlanIcon kind={b.space.kind} className="h-6 w-6 text-cobalt" /> : null}
 					<h3 className="font-display text-xl font-semibold leading-none">{b.name}</h3>
-					{b.status === 'pending' ? <Tag tone="marigold">Pending</Tag> : <Tag tone="free">Confirmed</Tag>}
+					{b.awaiting === 'awaiting_payment' ? <Tag tone="marigold">Awaiting payment</Tag> : b.awaiting === 'awaiting_approval' ? <Tag tone="marigold">Awaiting confirmation</Tag> : <Tag tone="free">Confirmed</Tag>}
 				</div>
 				<p className="t-num mt-1.5 text-[0.9375rem]">
 					{at(b.start, t, 'HH:mm')}–{at(b.end, t, 'HH:mm')} <span className="text-mute">· {formatLength(b.minutes)}</span>

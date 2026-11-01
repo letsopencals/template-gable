@@ -8,7 +8,8 @@ import { InviteGuests } from '@/components/confirmation/invite-guests';
 import { useSettings } from '@/contexts/settings-context';
 import type { Booking } from '@/lib/booking';
 import { downloadIcs } from '@/lib/ics';
-import { formatMoney } from '@/lib/money';
+import { awaitingCopy, payLine } from '@/lib/payment-copy';
+import { PaymentInstructionsBlock } from '@/components/confirmation/payment-instructions';
 import { siteConfig } from '@/lib/site-config';
 import type { Catalogue } from '@/lib/workspace';
 import { at, localDay } from '@/lib/workspace-time';
@@ -42,18 +43,31 @@ export function ThankYouView({ cat, bookings, receipt, preview }: { cat: Catalog
 	const first = bookings[0];
 	const tz = first?.house?.tz ?? 'Europe/Dublin';
 	const firstName = receipt.name?.split(' ')[0] ?? null;
-	const payLine = receipt.total <= 0 ? 'There’s nothing to pay.' : receipt.paid ? `Paid ${formatMoney(receipt.total, currency)}, receipt in your inbox.` : `Pay ${formatMoney(receipt.due, currency)} at the front desk on the day, by card or phone.`;
+	const pay = payLine(receipt, currency, tz);
+	const waiting = awaitingCopy(receipt.awaiting ?? null, bookings.length);
+	const all = bookings.length === 1 ? 'Your booking is' : bookings.length === 2 ? 'Both bookings are' : `All ${bookings.length} bookings are`;
 
 	return (
 		<div className="mx-auto max-w-[1360px] px-4 pb-24 sm:px-6 lg:px-10 print:max-w-none print:p-0">
-			<SheetStrip number="GA-400" title="Confirmed" note={receipt.ref ? `Ref #${receipt.ref}` : undefined} className="print:hidden" />
+			<SheetStrip number="GA-400" title={waiting ? waiting.strip : 'Confirmed'} note={receipt.ref ? `Ref #${receipt.ref}` : undefined} className="print:hidden" />
 			<header className="grid grid-cols-[minmax(0,1fr)] gap-6 py-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end print:hidden">
 				<div>
 					<h1 className="t-h1">
-						You’re booked{firstName ? <>, <span className="highlight">{firstName}</span></> : null}.
+						{waiting ? 'Booking received' : 'You’re booked'}
+						{firstName ? <>, <span className="highlight">{firstName}</span></> : null}.
 					</h1>
 					<p className="t-lead mt-3 max-w-2xl">
-						{bookings.length === 1 ? 'Your booking is' : bookings.length === 2 ? 'Both bookings are' : `All ${bookings.length} bookings are`} confirmed{receipt.email ? <> and on the way to <strong className="font-medium text-ink">{receipt.email}</strong></> : null}. {payLine}
+						{waiting ? (
+							<>
+								{waiting.lead}
+								{receipt.email ? <> The details are on the way to <strong className="font-medium text-ink">{receipt.email}</strong>.</> : null}
+							</>
+						) : (
+							<>
+								{all} confirmed{receipt.email ? <> and on the way to <strong className="font-medium text-ink">{receipt.email}</strong></> : null}.
+							</>
+						)}{' '}
+						{pay}
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
@@ -68,6 +82,8 @@ export function ThankYouView({ cat, bookings, receipt, preview }: { cat: Catalog
 					</Link>
 				</div>
 			</header>
+
+			<PaymentInstructionsBlock payment={receipt} reference={receipt.ref} currency={currency} tz={tz} className="mb-8 print:hidden" />
 
 			{bookings.length ? (
 				<DayPrintout cat={cat} bookings={bookings} receipt={receipt} currency={currency} />

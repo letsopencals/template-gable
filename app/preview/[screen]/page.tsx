@@ -29,7 +29,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ screen
 
 	if (screen === 'thank-you' || screen === 'thank-you-paid') {
 		const paid = screen === 'thank-you-paid';
-		return <ThankYouView cat={cat} bookings={day} preview receipt={{ ...PREVIEW_RECEIPT, paid, total, due: paid ? 0 : total }} />;
+		return <ThankYouView cat={cat} bookings={day} preview receipt={{ ...PREVIEW_RECEIPT, paid, total, due: paid ? 0 : total, provider: paid ? 'stripe' : 'cash' }} />;
 	}
 	if (screen === 'account') {
 		return (

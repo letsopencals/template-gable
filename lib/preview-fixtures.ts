@@ -29,6 +29,7 @@ export function previewBookings(cat: Catalogue): Booking[] {
 			itemId: null,
 			ref: `G${n++}`,
 			status: 'scheduled',
+			awaiting: null,
 			space,
 			house,
 			name: space.name,
