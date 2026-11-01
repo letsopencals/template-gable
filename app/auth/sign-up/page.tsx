@@ -8,7 +8,7 @@ import { signUpSchema, type SignUpFormValues } from '@/lib/schemas';
 import { useFormSubmit } from '@/hooks/use-form-submit';
 import { AuthSheet, FormError } from '@/components/site/auth-sheet';
 import { Button } from '@/components/ui/button';
-import { Field, Input } from '@/components/ui/field';
+import { Field, Input, fieldAria } from '@/components/ui/field';
 
 export default function SignUpPage() {
 	const router = useRouter();
@@ -42,17 +42,17 @@ export default function SignUpPage() {
 			<form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field label="First name" htmlFor="firstName" error={errors.firstName?.message}>
-						<Input id="firstName" autoComplete="given-name" aria-invalid={!!errors.firstName} {...form.register('firstName')} />
+						<Input id="firstName" autoComplete="given-name" {...fieldAria('firstName', errors.firstName?.message)} {...form.register('firstName')} />
 					</Field>
 					<Field label="Last name" htmlFor="lastName" optional error={errors.lastName?.message}>
-						<Input id="lastName" autoComplete="family-name" {...form.register('lastName')} />
+						<Input id="lastName" autoComplete="family-name" {...fieldAria('lastName', errors.lastName?.message)} {...form.register('lastName')} />
 					</Field>
 				</div>
 				<Field label="Email" htmlFor="email" error={errors.email?.message}>
-					<Input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...form.register('email')} />
+					<Input id="email" type="email" autoComplete="email" {...fieldAria('email', errors.email?.message)} {...form.register('email')} />
 				</Field>
 				<Field label="Password" htmlFor="password" hint="At least 8 characters." error={errors.password?.message}>
-					<Input id="password" type="password" autoComplete="new-password" aria-invalid={!!errors.password} {...form.register('password')} />
+					<Input id="password" type="password" autoComplete="new-password" {...fieldAria('password', errors.password?.message, true)} {...form.register('password')} />
 				</Field>
 				<Button type="submit" size="lg" fullWidth loading={isSubmitting}>
 					Create account

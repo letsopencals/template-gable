@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 export interface ApiErrorBody extends Partial<Pick<CheckoutErrorResponse, 'orderId' | 'paymentStatus'>> {
 	error: string;
 	errors?: Record<string, string>;
+	/** The API's field validation errors, unchanged: `{ property: 'customer.email', messages: [...] }` per failing field. */
+	fieldErrors?: OpencalsApiError['errors'];
 	/** The API's machine-readable reason, e.g. a `CheckoutErrorCode` or a discount code's `CODE_EXPIRED`. */
 	code?: string;
 }
@@ -20,6 +22,7 @@ export function handleApiError(err: unknown, fallbackMessage = 'Internal server 
 		const body: ApiErrorBody = {
 			error: err.message,
 			...(Object.keys(fieldErrors).length > 0 && { errors: fieldErrors }),
+			...(err.errors?.length && { fieldErrors: err.errors }),
 			...(err.code && { code: err.code }),
 			...(checkout.orderId && { orderId: checkout.orderId }),
 			...(checkout.paymentStatus && { paymentStatus: checkout.paymentStatus }),

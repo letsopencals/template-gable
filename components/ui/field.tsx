@@ -35,7 +35,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 	);
 });
 
-/** Label + control + hint/error. `htmlFor` must match the control id. */
+/**
+ * `aria-invalid` and `aria-describedby` for the control inside a `<Field htmlFor={id}>`: the error when there is one,
+ * otherwise the hint.
+ */
+export function fieldAria(id: string, error?: ReactNode, hint?: boolean) {
+	if (error) return { 'aria-invalid': true, 'aria-describedby': `${id}-error` } as const;
+	return hint ? ({ 'aria-describedby': `${id}-hint` } as const) : {};
+}
+
+/** Label + control + hint/error. `htmlFor` must match the control id; the error is `<id>-error`, the hint `<id>-hint`. */
 export function Field({
 	label,
 	htmlFor,
@@ -61,11 +70,13 @@ export function Field({
 			</label>
 			{children}
 			{error ? (
-				<p role="alert" className="text-[0.8125rem] text-alert">
+				<p role="alert" id={htmlFor ? `${htmlFor}-error` : undefined} className="text-[0.8125rem] text-alert">
 					{error}
 				</p>
 			) : hint ? (
-				<p className="text-[0.8125rem] text-mute">{hint}</p>
+				<p id={htmlFor ? `${htmlFor}-hint` : undefined} className="text-[0.8125rem] text-mute">
+					{hint}
+				</p>
 			) : null}
 		</div>
 	);

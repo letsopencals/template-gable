@@ -2,19 +2,23 @@
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
 import { Button, buttonClasses } from '@/components/ui/button';
-import { Field, Input } from '@/components/ui/field';
+import { Field, Input, fieldAria } from '@/components/ui/field';
 import { Price } from '@/components/ui/price';
 import { SheetStrip } from '@/components/ui/sheet';
 import { DaySheet } from '@/components/day-sheet/day-sheet';
 import { useDaySheet } from '@/hooks/use-day-sheet';
-import { useCheckout } from '@/hooks/use-checkout';
+import { useCheckout, type DetailField } from '@/hooks/use-checkout';
+import { PHONE_HINT } from '@/lib/field-errors';
 import { useSettings } from '@/contexts/settings-context';
 import type { Catalogue } from '@/lib/workspace';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
+
+/** The input for each detail the API can reject. */
+const DETAIL_IDS: Record<DetailField, string> = { email: 'co-email', firstName: 'co-first', lastName: 'co-last', phone: 'co-phone' };
 
 const StripePayment = dynamic(() => import('@/components/checkout/stripe-payment').then((m) => m.StripePayment), {
 	ssr: false,
@@ -32,6 +36,13 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 	const marketing = settings?.checkoutSettings?.emailMarketingOptIn;
 	const phoneReq = settings?.checkoutSettings?.customerPhoneRequirement;
 	const [code, setCode] = useState('');
+	const fe = c.fieldErrors;
+
+	// Take the customer to the first field the API (or the phone check) rejected.
+	useEffect(() => {
+		const first = (Object.keys(DETAIL_IDS) as DetailField[]).find((f) => fe[f]);
+		if (first) document.getElementById(DETAIL_IDS[first])?.focus();
+	}, [fe]);
 
 	if (!sheet.count) {
 		return (
@@ -56,7 +67,10 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 
 	const card = c.chosen?.checkoutMode === 'internal' || c.chosen?.checkoutMode === 'redirect';
 	const confirmLabel = card ? `Continue to payment` : sheet.total > 0 ? confirmFor(c.chosen?.name) : 'Confirm booking';
-	const set = (k: keyof typeof c.details) => (e: React.ChangeEvent<HTMLInputElement>) => c.setDetails({ ...c.details, [k]: k === 'marketing' ? e.target.checked : e.target.value });
+	const set = (k: keyof typeof c.details) => (e: React.ChangeEvent<HTMLInputElement>) => {
+		c.clearFieldError(k);
+		c.setDetails({ ...c.details, [k]: k === 'marketing' ? e.target.checked : e.target.value });
+	};
 
 	return (
 		<div className="mx-auto max-w-[1360px] px-4 pb-32 sm:px-6 lg:px-10 lg:pb-24">
@@ -77,18 +91,18 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 
 					<Step n="01" title="Who’s booking" aside={c.signedIn ? <span className="text-[0.8125rem] text-mute">Signed in</span> : <Link href="/auth/sign-in?callbackUrl=/checkout" className="text-[0.8125rem] font-medium text-cobalt underline underline-offset-4">Have an account? Sign in</Link>}>
 						<div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
-							<Field label="Email" htmlFor="co-email" className="sm:col-span-2" hint="Your confirmation, invoice and the calendar file go here.">
-								<Input id="co-email" type="email" autoComplete="email" required value={c.details.email} onChange={set('email')} readOnly={c.signedIn} />
+							<Field label="Email" htmlFor="co-email" className="sm:col-span-2" hint="Your confirmation, invoice and the calendar file go here." error={fe.email}>
+								<Input id="co-email" type="email" autoComplete="email" required value={c.details.email} onChange={set('email')} readOnly={c.signedIn} {...fieldAria('co-email', fe.email, true)} />
 							</Field>
-							<Field label="First name" htmlFor="co-first">
-								<Input id="co-first" autoComplete="given-name" required value={c.details.firstName} onChange={set('firstName')} />
+							<Field label="First name" htmlFor="co-first" error={fe.firstName}>
+								<Input id="co-first" autoComplete="given-name" required value={c.details.firstName} onChange={set('firstName')} {...fieldAria('co-first', fe.firstName)} />
 							</Field>
-							<Field label="Last name" htmlFor="co-last" optional>
-								<Input id="co-last" autoComplete="family-name" value={c.details.lastName} onChange={set('lastName')} />
+							<Field label="Last name" htmlFor="co-last" optional error={fe.lastName}>
+								<Input id="co-last" autoComplete="family-name" value={c.details.lastName} onChange={set('lastName')} {...fieldAria('co-last', fe.lastName)} />
 							</Field>
 							{phoneReq !== 'hidden' ? (
-								<Field label="Phone" htmlFor="co-phone" optional={phoneReq !== 'required'} hint="Only if reception needs to reach you on the day.">
-									<Input id="co-phone" type="tel" autoComplete="tel" required={phoneReq === 'required'} value={c.details.phone} onChange={set('phone')} />
+								<Field label="Phone" htmlFor="co-phone" optional={phoneReq !== 'required'} hint={`Only if reception needs to reach you on the day. ${PHONE_HINT}`} error={fe.phone}>
+									<Input id="co-phone" type="tel" autoComplete="tel" placeholder="+353 87 123 4567" required={phoneReq === 'required'} value={c.details.phone} onChange={set('phone')} {...fieldAria('co-phone', fe.phone, true)} />
 								</Field>
 							) : null}
 							{marketing && marketing !== 'dont_show' && !c.signedIn ? (

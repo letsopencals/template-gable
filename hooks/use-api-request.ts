@@ -1,13 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ApiErrorBody } from '@/lib/api-error-handler';
+import type { ApiFieldError } from '@/lib/field-errors';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-
-interface ApiErrorResponse {
-	error?: string;
-	errors?: Record<string, string>;
-}
 
 interface UseApiRequestOptions<TData> {
 	method?: HttpMethod;
@@ -19,7 +16,8 @@ interface UseApiRequestOptions<TData> {
 interface UseApiRequestResult<TData> {
 	data: TData | null;
 	error: string | null;
-	fieldErrors: Record<string, string> | null;
+	/** The API's field validation errors (`{ property, messages }`), for the form to put under each field. */
+	fieldErrors: ApiFieldError[] | null;
 	loading: boolean;
 	execute: (body?: unknown) => Promise<TData | null>;
 	reset: () => void;
@@ -34,7 +32,7 @@ export function useApiRequest<TData>(
 
 	const [data, setData] = useState<TData | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [fieldErrors, setFieldErrors] = useState<Record<string, string> | null>(null);
+	const [fieldErrors, setFieldErrors] = useState<ApiFieldError[] | null>(null);
 	const [loading, setLoading] = useState(shouldAutoFetch);
 	const abortRef = useRef<AbortController | null>(null);
 	const onSuccessRef = useRef(onSuccess);
@@ -69,11 +67,11 @@ export function useApiRequest<TData>(
 				});
 
 				if (!res.ok) {
-					const apiError: ApiErrorResponse | null = await res.json().catch(() => null);
+					const apiError: Partial<ApiErrorBody> | null = await res.json().catch(() => null);
 					const errorMessage = apiError?.error || `Request failed (${res.status})`;
 					setError(errorMessage);
-					if (apiError?.errors && Object.keys(apiError.errors).length > 0) {
-						setFieldErrors(apiError.errors);
+					if (apiError?.fieldErrors?.length) {
+						setFieldErrors(apiError.fieldErrors);
 					}
 					return null;
 				}

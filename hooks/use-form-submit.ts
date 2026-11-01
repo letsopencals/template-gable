@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { FieldPath, FieldValues, UseFormReturn } from 'react-hook-form';
+import { mapFieldErrors } from '@/lib/field-errors';
 import { useApiRequest } from './use-api-request';
 
 interface UseFormSubmitOptions<TData> {
@@ -31,18 +32,24 @@ export function useFormSubmit<TFormValues extends FieldValues, TData = unknown>(
 		onSuccess,
 	});
 
+	// The API's field errors, sorted onto this form's fields (`first_name` / `customer.firstName` → `firstName`).
+	const { mapped, unmapped } = useMemo(
+		() => mapFieldErrors(request.fieldErrors, Object.keys(form.getValues()) as FieldPath<TFormValues>[]),
+		[request.fieldErrors, form],
+	);
+
 	useEffect(() => {
-		if (request.fieldErrors) {
-			for (const [field, message] of Object.entries(request.fieldErrors)) {
-				form.setError(field as FieldPath<TFormValues>, { type: 'server', message });
-			}
-		}
-	}, [request.fieldErrors, form]);
+		const entries = Object.entries(mapped) as [FieldPath<TFormValues>, string][];
+		entries.forEach(([field, message], i) => form.setError(field, { type: 'server', message }, { shouldFocus: i === 0 }));
+	}, [mapped, form]);
+
+	// The banner is only for errors no field shows.
+	const allMapped = !!request.fieldErrors?.length && unmapped.length === 0;
 
 	return {
 		submit: request.execute,
 		isSubmitting: request.loading,
-		error: request.error,
+		error: allMapped ? null : request.error,
 		clearError: request.reset,
 	};
 }

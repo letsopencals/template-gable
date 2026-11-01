@@ -22,6 +22,7 @@ import { usePaymentProviders } from '@/hooks/use-payment-providers';
 import { revalidateHouseAvailability } from '@/hooks/use-house-availability';
 import { patchSnapshot, readSnapshot, saveSnapshot } from '@/lib/day-snapshot';
 import { awaitingOf, type Booking } from '@/lib/booking';
+import { PHONE_HINT, mapFieldErrors, type ApiFieldError } from '@/lib/field-errors';
 
 /**
  * Checkout for the whole day sheet, in the order the Storefront API expects:
@@ -40,6 +41,10 @@ export interface Details {
 
 const validEmail = (v: string) => /.+@.+\..+/.test(v.trim());
 
+/** The details the API can reject field by field (`customer.phone` → `phone`). */
+const DETAIL_FIELDS = ['email', 'firstName', 'lastName', 'phone'] as const;
+export type DetailField = (typeof DETAIL_FIELDS)[number];
+
 /** A failed /api call, with the API's machine-readable code (and the order a checked-out cart became) when sent. */
 class CheckoutError extends Error {
 	constructor(
@@ -47,6 +52,7 @@ class CheckoutError extends Error {
 		readonly status: number,
 		readonly code?: CheckoutErrorCode,
 		readonly orderId?: string,
+		readonly fieldErrors?: ApiFieldError[],
 	) {
 		super(message);
 	}
@@ -61,7 +67,7 @@ const MESSAGES: Partial<Record<CheckoutErrorCode, string>> = {
 async function readError(res: Response, fallback: string): Promise<CheckoutError> {
 	const data = (await res.json().catch(() => null)) as CheckoutApiErrorBody | null;
 	const code = data?.code;
-	return new CheckoutError((code && MESSAGES[code]) || data?.error || fallback, res.status, code, data?.orderId);
+	return new CheckoutError((code && MESSAGES[code]) || data?.error || fallback, res.status, code, data?.orderId, data?.fieldErrors);
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -135,6 +141,16 @@ export function useCheckout(bookings: Booking[]) {
 
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [fieldErrors, setFieldErrors] = useState<Partial<Record<DetailField, string>>>({});
+	/** Editing a field clears the error under it. */
+	const clearFieldError = useCallback((field: keyof Details) => {
+		setFieldErrors((prev) => {
+			if (!(field in prev)) return prev;
+			const next = { ...prev };
+			delete next[field as DetailField];
+			return next;
+		});
+	}, []);
 	const [payment, setPayment] = useState<CheckoutStartResponse | null>(null);
 
 	/** Customer + answers onto the cart (both checkout paths). */
@@ -230,8 +246,14 @@ export function useCheckout(bookings: Booking[]) {
 	/** One button for every method: card and redirect methods stop after start, the rest confirm right away. */
 	const confirm = useCallback(async () => {
 		if (!provider || !valid) return;
-		setSubmitting(true);
 		setError(null);
+		const phone = details.phone.trim();
+		if (phone && !phone.startsWith('+')) {
+			setFieldErrors({ phone: PHONE_HINT });
+			return;
+		}
+		setFieldErrors({});
+		setSubmitting(true);
 		try {
 			await prepare();
 			const data = await start(provider);
@@ -248,9 +270,18 @@ export function useCheckout(bookings: Booking[]) {
 			}
 			await submit();
 		} catch (e) {
+			// A 400 on the details: each message goes under its field, the banner only gets what no field shows.
+			if (e instanceof CheckoutError && e.fieldErrors?.length) {
+				const { mapped, unmapped } = mapFieldErrors(e.fieldErrors, DETAIL_FIELDS);
+				setFieldErrors(mapped);
+				if (!unmapped.length) {
+					setSubmitting(false);
+					return;
+				}
+			}
 			await recover(e, 'Something went wrong.');
 		}
-	}, [provider, valid, prepare, start, submit, providers, recover]);
+	}, [provider, valid, details.phone, prepare, start, submit, providers, recover]);
 
 	const onCardPaid = useCallback(
 		async (paymentIntentId: string) => {
@@ -291,6 +322,8 @@ export function useCheckout(bookings: Booking[]) {
 		submitting,
 		error,
 		setError,
+		fieldErrors,
+		clearFieldError,
 		payment,
 		onCardPaid,
 	};
