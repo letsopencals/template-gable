@@ -7,19 +7,20 @@ import {
 	type CheckoutQuestionAnswer,
 	type CreateAppointment,
 	type CreateAppointmentAddOn,
-	type ExistingOrderCustomer,
-	type NewOrderCustomer,
+	type ExistingAppointmentCustomer,
+	type NewAppointmentCustomer,
 } from '@opencals/storefront-sdk';
 import { getAccessToken } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { handleApiError } from '@/lib/api-error-handler';
 
-/** The client sends the checkout customer shape (`kind` picks it); appointments take it without `kind`. */
-function toAppointmentCustomer(customer: ExistingOrderCustomer | NewOrderCustomer): CreateAppointment['customer'] {
+/** Rebuilds the customer from the fields the API takes (`kind` picks the shape; the body is client input). */
+function toAppointmentCustomer(customer: ExistingAppointmentCustomer | NewAppointmentCustomer): CreateAppointment['customer'] {
 	if (customer.kind === 'existing' && customer.customerId) return { customerId: customer.customerId };
-	const email = 'email' in customer ? customer.email : '';
-	return { externalId: email ?? '', email: email ?? '', firstName: customer.firstName, lastName: customer.lastName };
+	const fresh: Partial<NewAppointmentCustomer> = 'email' in customer ? customer : {};
+	const email = fresh.email ?? '';
+	return { externalId: email, email, firstName: fresh.firstName, lastName: fresh.lastName };
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
 			slot: AppointmentDateRangeSlot;
 			numberOfAttendees?: number;
 			addOns?: CreateAppointmentAddOn[];
-			customer?: ExistingOrderCustomer | NewOrderCustomer;
+			customer?: ExistingAppointmentCustomer | NewAppointmentCustomer;
 			checkoutQuestionAnswers?: CheckoutQuestionAnswer[];
 			/** Invitees' emails (they get the booking emails and calendar invite; capacity is unaffected) */
 			guests?: AppointmentGuest[];

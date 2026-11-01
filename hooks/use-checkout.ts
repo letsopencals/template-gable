@@ -7,6 +7,7 @@ import useSWR from 'swr';
 import type {
 	CartCheckoutQuestionResponse,
 	CartResponse,
+	CheckoutErrorCode,
 	CheckoutResponse,
 	CheckoutStartResponse,
 	CustomerProviderCatalogItem,
@@ -15,7 +16,7 @@ import type {
 	StartCheckout,
 	SubmitCheckout,
 } from '@opencals/storefront-sdk';
-import type { ApiErrorBody } from '@/lib/api-error-handler';
+import type { CheckoutApiErrorBody } from '@/lib/api-error-handler';
 import { useCart } from '@/contexts/cart-context';
 import { usePaymentProviders } from '@/hooks/use-payment-providers';
 import { revalidateHouseAvailability } from '@/hooks/use-house-availability';
@@ -44,21 +45,21 @@ class CheckoutError extends Error {
 	constructor(
 		message: string,
 		readonly status: number,
-		readonly code?: string,
+		readonly code?: CheckoutErrorCode,
 		readonly orderId?: string,
 	) {
 		super(message);
 	}
 }
 
-const MESSAGES: Record<string, string> = {
+const MESSAGES: Partial<Record<CheckoutErrorCode, string>> = {
 	CART_EXPIRED: 'Your hold ran out and a space on your day sheet was booked in the meantime. Plan the day again: the rest is probably still free.',
 	CHECKOUT_IN_PROGRESS: 'We’re still confirming this day sheet. Give it a moment and try again.',
 	PAYMENT_NOT_AUTHORIZED: 'Your card wasn’t authorised, so nothing was booked or charged. Check the details or use another card and pay again.',
 };
 
 async function readError(res: Response, fallback: string): Promise<CheckoutError> {
-	const data = (await res.json().catch(() => null)) as ApiErrorBody | null;
+	const data = (await res.json().catch(() => null)) as CheckoutApiErrorBody | null;
 	const code = data?.code;
 	return new CheckoutError((code && MESSAGES[code]) || data?.error || fallback, res.status, code, data?.orderId);
 }

@@ -1,27 +1,28 @@
-import { OpencalsApiError } from '@opencals/storefront-sdk';
+import { OpencalsApiError, type CheckoutErrorResponse } from '@opencals/storefront-sdk';
 import { NextResponse } from 'next/server';
 
 /** Error JSON every /api route answers with. `code`, `orderId` and `paymentStatus` come from the API when it sends them. */
-export interface ApiErrorBody {
+export interface ApiErrorBody extends Partial<Pick<CheckoutErrorResponse, 'orderId' | 'paymentStatus'>> {
 	error: string;
 	errors?: Record<string, string>;
+	/** The API's machine-readable reason, e.g. a `CheckoutErrorCode` or a discount code's `CODE_EXPIRED`. */
 	code?: string;
-	orderId?: string;
-	paymentStatus?: string;
 }
+
+/** Error JSON from the /api/checkout/* routes. A plain 400 validation error has no `code`. */
+export type CheckoutApiErrorBody = Omit<ApiErrorBody, 'code'> & Partial<Pick<CheckoutErrorResponse, 'code'>>;
 
 export function handleApiError(err: unknown, fallbackMessage = 'Internal server error') {
 	if (err instanceof OpencalsApiError) {
 		// 409 CART_ALREADY_CHECKED_OUT carries the order it became, 402 PAYMENT_NOT_AUTHORIZED the card's status.
-		const orderId = typeof err.body?.orderId === 'string' ? err.body.orderId : undefined;
-		const paymentStatus = typeof err.body?.paymentStatus === 'string' ? err.body.paymentStatus : undefined;
+		const checkout = (err.body ?? {}) as Partial<CheckoutErrorResponse>;
 		const fieldErrors = err.toFieldErrors();
 		const body: ApiErrorBody = {
 			error: err.message,
 			...(Object.keys(fieldErrors).length > 0 && { errors: fieldErrors }),
 			...(err.code && { code: err.code }),
-			...(orderId && { orderId }),
-			...(paymentStatus && { paymentStatus }),
+			...(checkout.orderId && { orderId: checkout.orderId }),
+			...(checkout.paymentStatus && { paymentStatus: checkout.paymentStatus }),
 		};
 		return NextResponse.json(body, { status: err.status });
 	}

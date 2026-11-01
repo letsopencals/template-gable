@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AuthSheet } from '@/components/site/auth-sheet';
 import { ButtonLink, Spinner } from '@/components/ui/button';
-import { resolveLink, type ResolveLinkResult } from '@/app/auth/actions/resolve-link';
+import type { MagicLinkErrorCode } from '@opencals/storefront-sdk';
+import { resolveLink } from '@/app/auth/actions/resolve-link';
 
-const ERROR_COPY: Record<NonNullable<ResolveLinkResult['errorCode']>, { title: string; message: string }> = {
+const ERROR_COPY: Record<MagicLinkErrorCode, { title: string; message: string }> = {
 	TOKEN_EXPIRED: { title: 'Link Expired', message: 'This link has expired. Please request a new one.' },
 	TOKEN_USED: { title: 'Link Already Used', message: 'This link has already been used.' },
 	TOKEN_INVALID: { title: 'Invalid Link', message: 'This link is invalid or could not be found.' },
@@ -27,7 +28,7 @@ export default function LinkPage() {
 	const token = params?.token;
 
 	const [status, setStatus] = useState<'resolving' | 'error'>('resolving');
-	const [errorCode, setErrorCode] = useState<NonNullable<ResolveLinkResult['errorCode']>>('TOKEN_INVALID');
+	const [errorCode, setErrorCode] = useState<MagicLinkErrorCode>('TOKEN_INVALID');
 	const ranRef = useRef(false);
 
 	useEffect(() => {

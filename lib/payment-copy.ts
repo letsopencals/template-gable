@@ -1,4 +1,4 @@
-import type { PaymentInstructions, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
+import type { PaymentInstructions, PaymentProviderName, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
 import { formatMoney } from '@/lib/money';
 import { at, isoToMin } from '@/lib/workspace-time';
 
@@ -10,7 +10,7 @@ export interface PaymentState {
 	/** Cancelled before anything was paid: nothing is due */
 	voided?: boolean;
 	/** Payment method chosen at checkout, when this tab knows it */
-	provider?: string | null;
+	provider?: PaymentProviderName | null;
 	instructions?: PaymentInstructions | null;
 	/** Pay-by deadline (ISO) from the instructions or the order */
 	dueAt?: string | null;

@@ -1,4 +1,4 @@
-import type { PaymentInstructions } from '@opencals/storefront-sdk';
+import type { PaymentInstructions, PaymentProviderName } from '@opencals/storefront-sdk';
 import type { Booking } from '@/lib/booking';
 
 /**
@@ -13,8 +13,8 @@ export interface DaySnapshot {
 	firstName: string | null;
 	email: string | null;
 	total: number;
-	/** Payment method chosen at checkout (stripe, cash, bank_transfer, stripe_invoice, no_payment_required, …) */
-	provider: string | null;
+	/** Payment method chosen at checkout */
+	provider: PaymentProviderName | null;
 	/** Bank details / invoice link from submit, for manual methods with something still to pay. The order never has them. */
 	instructions: PaymentInstructions | null;
 }
