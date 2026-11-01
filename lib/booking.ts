@@ -3,40 +3,42 @@
  * the confirmation, or an appointment in the account. Pure functions, safe on the server and the client; everything
  * comes from the API objects, matched against the catalogue (houses + spaces).
  */
-import type { CartItem, CartResponse, OrderDetailResponse, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
+import type {
+	AppointmentDetailResponse,
+	AppointmentListItemResponse,
+	CartItem,
+	CartResponse,
+	OrderDetailAppointment,
+	OrderDetailResponse,
+	StorefrontAppointmentPendingReason,
+} from '@opencals/storefront-sdk';
 import { houseBySlug, spaceBySlug, type Catalogue, type House, type Space } from '@/lib/workspace';
 import { isoToMin } from '@/lib/workspace-time';
 
-/** The appointment fields every SDK appointment shape (cart, list, detail, order line) shares. */
-export interface AppointmentLike {
-	id: string;
-	name: string;
-	status: string;
-	/** Why a pending booking waits; absent (or null) once it's confirmed */
-	pendingReason?: PendingReason | null;
-	from: string;
-	to: string;
-	productId?: string;
-	locationId?: string | null;
-	numberOfAttendees: number;
-	customAttributes?: { [key: string]: string } | null;
-	guests?: { id?: string; email: string }[] | null;
-	checkoutQuestionAnswers?: { questionId?: string; question: string; answer: string }[] | null;
-	addOns?: { id?: string; addOnId?: string; quantity: number; addOn?: { id?: string; title?: string | null; slug?: string } | null }[] | null;
-	product: {
-		id?: string;
-		slug: string;
-		title: string;
-		variantTitle?: string | null;
-		cancelGap?: number;
-		rescheduleGap?: number;
-		allowCustomerCancel?: boolean;
-		allowCustomerReschedule?: boolean;
-		price?: number;
-		duration?: number;
-	};
-	location?: { id?: string; slug?: string; title: string | null } | null;
-}
+type AppointmentFields =
+	| 'id'
+	| 'name'
+	| 'status'
+	| 'pendingReason'
+	| 'from'
+	| 'to'
+	| 'productId'
+	| 'locationId'
+	| 'numberOfAttendees'
+	| 'customAttributes'
+	| 'product'
+	| 'location';
+
+/**
+ * Every SDK appointment shape a booking is read from: a cart item, an order line, and the account list. Guests,
+ * answers and add-ons are typed only on the appointment detail; the API sends them on the others too.
+ */
+export type AppointmentLike = (
+	| Pick<NonNullable<CartItem['appointment']>, AppointmentFields>
+	| Pick<OrderDetailAppointment, AppointmentFields>
+	| Pick<AppointmentListItemResponse, AppointmentFields>
+) &
+	Partial<Pick<AppointmentDetailResponse, 'guests' | 'checkoutQuestionAnswers' | 'addOns'>>;
 
 export interface BookingExtra {
 	/** Cart add-on item id (day sheet only) */
@@ -56,7 +58,7 @@ export interface Booking {
 	ref: string;
 	status: string;
 	/** 'awaiting_payment' / 'awaiting_approval' while it waits to be confirmed, otherwise null */
-	awaiting: PendingReason | null;
+	awaiting: StorefrontAppointmentPendingReason | null;
 	space: Space | null;
 	house: House | null;
 	/** Space name even when the catalogue doesn't know it */
@@ -82,19 +84,17 @@ export interface Booking {
 	allowReschedule: boolean;
 }
 
-export type PendingReason = StorefrontAppointmentPendingReason;
-
 /**
  * A booking waits only while it's pending *with* a reason. Right after checkout a booking on a house that confirms
  * everything is briefly pending with no reason (a background job confirms it): that one is confirmed.
  */
-export function awaitingOf(a: { status?: string | null; pendingReason?: PendingReason | null }): PendingReason | null {
+export function awaitingOf(a: Pick<AppointmentLike, 'status' | 'pendingReason'>): StorefrontAppointmentPendingReason | null {
 	if ((a.status ?? '').toLowerCase() !== 'pending') return null;
 	return a.pendingReason === 'awaiting_payment' || a.pendingReason === 'awaiting_approval' ? a.pendingReason : null;
 }
 
 /** The one reason a whole order waits for: payment first (it decides the rest), then approval. */
-export function orderAwaiting(bookings: Pick<Booking, 'awaiting'>[]): PendingReason | null {
+export function orderAwaiting(bookings: Pick<Booking, 'awaiting'>[]): StorefrontAppointmentPendingReason | null {
 	if (bookings.some((b) => b.awaiting === 'awaiting_payment')) return 'awaiting_payment';
 	if (bookings.some((b) => b.awaiting === 'awaiting_approval')) return 'awaiting_approval';
 	return null;
@@ -107,7 +107,10 @@ export function toBooking(a: AppointmentLike, cat: Catalogue, extra?: Partial<Bo
 	const house = space ? (cat.houses.find((h) => h.id === space.houseId) ?? null) : houseBySlug(cat, a.locationId ?? a.location?.slug ?? null);
 	const start = isoToMin(a.from);
 	const end = isoToMin(a.to);
-	const answers = (a.checkoutQuestionAnswers ?? []).filter((x) => x.answer?.trim()).map((x) => ({ question: x.question, answer: x.answer.trim() }));
+	const answers = (a.checkoutQuestionAnswers ?? []).flatMap((x) => {
+		const answer = x.answer?.trim();
+		return answer ? [{ question: x.question, answer }] : [];
+	});
 	return {
 		id: a.id,
 		itemId: null,
@@ -147,7 +150,7 @@ export function cartBookings(cart: CartResponse | null | undefined, cat: Catalog
 	return (cart?.items ?? [])
 		.filter((it): it is CartItem & { appointment: NonNullable<CartItem['appointment']> } => !!it.appointment)
 		.map((it) => {
-			const b = toBooking(it.appointment as unknown as AppointmentLike, cat, {
+			const b = toBooking(it.appointment, cat, {
 				itemId: it.id,
 				listPrice: it.originalSubtotal,
 				total: it.discountedSubtotal,
@@ -170,7 +173,7 @@ export function orderBookings(order: OrderDetailResponse, cat: Catalogue): Booki
 	return order.lineItems
 		.filter((li) => li.appointment)
 		.map((li) =>
-			toBooking(li.appointment as unknown as AppointmentLike, cat, {
+			toBooking(li.appointment, cat, {
 				listPrice: li.originalSubtotal,
 				total: li.discountedSubtotal,
 				extras: (li.addOnLineItems ?? []).map((x) => ({ itemId: null, extraId: x.addOn?.id ?? null, title: x.addOn?.title ?? 'Extra', quantity: x.quantity, total: null })),

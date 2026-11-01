@@ -2,19 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
+import type { SelfServiceProfileResponse } from '@opencals/storefront-sdk';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 
-interface Profile {
-	email: string;
-	firstName: string | null;
-	lastName: string | null;
-	phone: string | null;
-}
-
 /** Name and phone (the email is the sign-in, so it isn't editable here). */
 export function ProfileView() {
-	const { data, mutate } = useSWR<Profile>('/api/account/profile', (u: string) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(new Error()))));
+	const { data, mutate } = useSWR<SelfServiceProfileResponse>('/api/account/profile', (u: string) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(new Error()))));
 	const [form, setForm] = useState({ firstName: '', lastName: '', phone: '' });
 	const [state, setState] = useState<'idle' | 'busy' | 'saved' | 'error'>('idle');
 	useEffect(() => {

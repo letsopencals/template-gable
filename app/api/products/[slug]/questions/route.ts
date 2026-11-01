@@ -1,5 +1,5 @@
 import '@/lib/opencals';
-import { CheckoutQuestionService, ProductService } from '@opencals/storefront-sdk';
+import { CheckoutQuestionService, ProductService, type LanguageCode } from '@opencals/storefront-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-error-handler';
 
@@ -8,7 +8,7 @@ export async function GET(
 	{ params }: { params: Promise<{ slug: string }> },
 ) {
 	const { slug } = await params;
-	const language = (request.nextUrl.searchParams.get('language') ?? 'en') as 'en';
+	const language = (request.nextUrl.searchParams.get('language') ?? 'en') as LanguageCode;
 
 	try {
 		const { data: product } = await ProductService.getBySlug({ path: { slug } });

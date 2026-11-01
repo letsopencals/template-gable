@@ -4,7 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import useSWR from 'swr';
-import type { CartCheckoutQuestionResponse, CartResponse, CheckoutResponse, CheckoutStartResponse, CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
+import type {
+	CartCheckoutQuestionResponse,
+	CartResponse,
+	CheckoutResponse,
+	CheckoutStartResponse,
+	CustomerProviderCatalogItem,
+	ExistingOrderCustomer,
+	NewOrderCustomer,
+	StartCheckout,
+	SubmitCheckout,
+} from '@opencals/storefront-sdk';
 import type { ApiErrorBody } from '@/lib/api-error-handler';
 import { useCart } from '@/contexts/cart-context';
 import { usePaymentProviders } from '@/hooks/use-payment-providers';
@@ -128,9 +138,10 @@ export function useCheckout(bookings: Booking[]) {
 
 	/** Customer + answers onto the cart (both checkout paths). */
 	const prepare = useCallback(async () => {
-		const customer = customerId
-			? { customerId, firstName: details.firstName.trim() || null, lastName: details.lastName.trim() || null, phone: details.phone.trim() || null }
+		const customer: ExistingOrderCustomer | NewOrderCustomer = customerId
+			? { kind: 'existing', customerId, firstName: details.firstName.trim() || null, lastName: details.lastName.trim() || null, phone: details.phone.trim() || null }
 			: {
+					kind: 'new',
 					email: details.email.trim(),
 					firstName: details.firstName.trim() || null,
 					lastName: details.lastName.trim() || null,
@@ -148,8 +159,9 @@ export function useCheckout(bookings: Booking[]) {
 	}, [customerId, details, headers, questions, answers, bookings, cart?.total]);
 
 	const start = useCallback(
-		async (name: string): Promise<CheckoutStartResponse> => {
-			const data = await post<CheckoutStartResponse>('/api/checkout/start', headers(), { provider: name }, 'We couldn’t start checkout.');
+		async (name: CustomerProviderCatalogItem['name']): Promise<CheckoutStartResponse> => {
+			const body: StartCheckout = { provider: name };
+			const data = await post<CheckoutStartResponse>('/api/checkout/start', headers(), body, 'We couldn’t start checkout.');
 			if (data.invalidItemIds?.length) throw new Error('Something on your day sheet was taken or expired. Remove it and try again.');
 			setPayment(data);
 			return data;
@@ -159,10 +171,11 @@ export function useCheckout(bookings: Booking[]) {
 
 	const submit = useCallback(
 		async (stripePaymentIntentId?: string) => {
+			const body: SubmitCheckout = { appointmentsSettings: { markAsScheduled: true }, ...(stripePaymentIntentId ? { stripePaymentIntentId } : {}) };
 			const data = await post<CheckoutResponse>(
 				'/api/checkout/submit',
 				headers(),
-				{ appointmentsSettings: { markAsScheduled: true }, ...(stripePaymentIntentId ? { stripePaymentIntentId } : {}) },
+				body,
 				'We couldn’t confirm the booking.',
 			);
 			// The confirmation reads the order back; until it can (and for the bank details or invoice link, which only
@@ -221,7 +234,7 @@ export function useCheckout(bookings: Booking[]) {
 		try {
 			await prepare();
 			const data = await start(provider);
-			const mode = (data.provider as string) === 'no_payment_required' ? 'none' : (providers.find((p) => p.name === provider)?.checkoutMode ?? (data.clientSecret ? 'internal' : 'manual'));
+			const mode: CustomerProviderCatalogItem['checkoutMode'] = data.provider === 'no_payment_required' ? 'none' : (providers.find((p) => p.name === provider)?.checkoutMode ?? (data.clientSecret ? 'internal' : 'manual'));
 			if (mode === 'internal') {
 				setSubmitting(false);
 				if (!data.clientSecret) throw new Error('The card form didn’t load. Try again, or pick another way to pay.');

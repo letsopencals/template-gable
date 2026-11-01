@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useState, type ReactNode } from 'react';
+import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { Price } from '@/components/ui/price';
@@ -208,7 +209,7 @@ export function CheckoutView({ cat }: { cat: Catalogue }) {
 }
 
 /** The confirm button for a method that takes no card here: say how the money will actually move. */
-function confirmFor(provider: string | undefined): string {
+function confirmFor(provider: CustomerProviderCatalogItem['name'] | undefined): string {
 	switch (provider) {
 		case 'cash':
 			return 'Confirm, pay at the house';

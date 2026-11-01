@@ -1,5 +1,5 @@
 import '@/lib/opencals';
-import { CheckoutService } from '@opencals/storefront-sdk';
+import { CheckoutService, type CheckoutQuestionAnswer } from '@opencals/storefront-sdk';
 import { getAccessToken } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-error-handler';
@@ -7,7 +7,7 @@ import { handleApiError } from '@/lib/api-error-handler';
 /** Save checkout-question answers on the cart. Body: `{ answers: { questionId, question, answer }[] }`. */
 export async function POST(request: NextRequest) {
 	try {
-		const { answers } = (await request.json()) as { answers?: { questionId: string; question: string; answer: string }[] };
+		const { answers } = (await request.json()) as { answers?: CheckoutQuestionAnswer[] };
 		const token = await getAccessToken();
 		await CheckoutService.saveAnswers({
 			body: { answers: (answers ?? []).filter((a) => a.questionId && a.answer?.trim()) },

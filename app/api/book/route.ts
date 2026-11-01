@@ -1,27 +1,25 @@
 import '@/lib/opencals';
-import { AppointmentService, CartService } from '@opencals/storefront-sdk';
+import {
+	AppointmentService,
+	CartService,
+	type AppointmentDateRangeSlot,
+	type AppointmentGuest,
+	type CheckoutQuestionAnswer,
+	type CreateAppointment,
+	type CreateAppointmentAddOn,
+	type ExistingOrderCustomer,
+	type NewOrderCustomer,
+} from '@opencals/storefront-sdk';
 import { getAccessToken } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { handleApiError } from '@/lib/api-error-handler';
 
-interface AddOnSelection {
-	addOnId: string;
-	quantity?: number;
-}
-
-interface QuestionAnswerInput {
-	questionId: string;
-	question: string;
-	answer: string;
-}
-
-interface CustomerInput {
-	kind: 'new' | 'existing';
-	customerId?: string;
-	email?: string;
-	firstName?: string;
-	lastName?: string;
+/** The client sends the checkout customer shape (`kind` picks it); appointments take it without `kind`. */
+function toAppointmentCustomer(customer: ExistingOrderCustomer | NewOrderCustomer): CreateAppointment['customer'] {
+	if (customer.kind === 'existing' && customer.customerId) return { customerId: customer.customerId };
+	const email = 'email' in customer ? customer.email : '';
+	return { externalId: email ?? '', email: email ?? '', firstName: customer.firstName, lastName: customer.lastName };
 }
 
 export async function POST(request: NextRequest) {
@@ -30,23 +28,15 @@ export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
 		const { slot, numberOfAttendees, addOns, customer, checkoutQuestionAnswers, guests, customAttributes } = body as {
-			slot: {
-				productId: string;
-				fromDate: string;
-				fromTime: string;
-				toDate: string;
-				toTime: string;
-				staffMemberId?: string | null;
-				locationId?: string | null;
-			};
+			slot: AppointmentDateRangeSlot;
 			numberOfAttendees?: number;
-			addOns?: AddOnSelection[];
-			customer?: CustomerInput;
-			checkoutQuestionAnswers?: QuestionAnswerInput[];
+			addOns?: CreateAppointmentAddOn[];
+			customer?: ExistingOrderCustomer | NewOrderCustomer;
+			checkoutQuestionAnswers?: CheckoutQuestionAnswer[];
 			/** Invitees' emails (they get the booking emails and calendar invite; capacity is unaffected) */
-			guests?: { email: string }[];
+			guests?: AppointmentGuest[];
 			/** Free-form notes on the booking */
-			customAttributes?: Record<string, string>;
+			customAttributes?: CreateAppointment['customAttributes'];
 		};
 
 		if (!slot?.productId || !slot?.fromDate || !slot?.fromTime || !slot?.toDate || !slot?.toTime) {
@@ -80,14 +70,7 @@ export async function POST(request: NextRequest) {
 						addOnId: a.addOnId,
 						...(typeof a.quantity === 'number' ? { quantity: a.quantity } : {}),
 					})),
-				...(customer
-				? {
-						customer:
-							customer.kind === 'existing' && customer.customerId
-								? { customerId: customer.customerId }
-								: { externalId: customer.email ?? '', email: customer.email ?? '', firstName: customer.firstName, lastName: customer.lastName },
-					}
-				: {}),
+				...(customer ? { customer: toAppointmentCustomer(customer) } : {}),
 				...(checkoutQuestionAnswers && checkoutQuestionAnswers.length > 0
 					? { checkoutQuestionAnswers }
 					: {}),

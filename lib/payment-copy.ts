@@ -1,5 +1,4 @@
-import type { PaymentInstructions } from '@opencals/storefront-sdk';
-import type { PendingReason } from '@/lib/booking';
+import type { PaymentInstructions, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
 import { formatMoney } from '@/lib/money';
 import { at, isoToMin } from '@/lib/workspace-time';
 
@@ -60,7 +59,7 @@ export function payRow(p: PaymentState, currency: string): string {
 }
 
 /** Headline wording for an order that waits, or null once it's confirmed. */
-export function awaitingCopy(reason: PendingReason | null, count: number): { strip: string; lead: string } | null {
+export function awaitingCopy(reason: StorefrontAppointmentPendingReason | null, count: number): { strip: string; lead: string } | null {
 	const it = count === 1 ? 'it' : 'them';
 	if (reason === 'awaiting_payment') return { strip: 'Awaiting payment', lead: `We’re holding ${count === 1 ? 'your booking' : 'your bookings'} until the payment arrives, then we confirm ${it}.` };
 	if (reason === 'awaiting_approval') return { strip: 'Awaiting confirmation', lead: `The house still has to confirm ${it}. We’ll email you as soon as they do.` };

@@ -2,7 +2,8 @@ import { Fragment } from 'react';
 import { TitleBlock } from '@/components/ui/title-block';
 import { PlanIcon } from '@/components/ui/plan-icon';
 import { HouseSection } from '@/components/confirmation/house-section';
-import type { Booking, PendingReason } from '@/lib/booking';
+import type { StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
+import type { Booking } from '@/lib/booking';
 import { payRow, type PaymentState } from '@/lib/payment-copy';
 import { kindByKey } from '@/lib/site-config';
 import { formatMoney } from '@/lib/money';
@@ -15,7 +16,7 @@ export interface PrintoutReceipt extends PaymentState {
 	email: string | null;
 	name: string | null;
 	/** What the order still waits for, or null when it's confirmed */
-	awaiting?: PendingReason | null;
+	awaiting?: StorefrontAppointmentPendingReason | null;
 }
 
 /**
