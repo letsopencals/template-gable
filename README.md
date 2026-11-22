@@ -240,6 +240,7 @@ Gable is one of the open-source booking templates built on the Opencals Storefro
 - **[Bali Villa Rentals](https://github.com/letsopencals/template-bali-villas)** — a villa-rental template (Bali, demo brand Lumbung Sidemen) with nightly stays and fixed check-in and check-out. [Live demo](https://template-bali-villas.vercel.app)
 - **[Tensile](https://github.com/letsopencals/template-reformer)** — a reformer Pilates studio template (Berlin) with a multi-studio class timetable, beds left, privates and workshops. [Live demo](https://template-reformer.vercel.app)
 - **[Alba Dental](https://github.com/letsopencals/template-alba)** — a dental group template (London) with five studios, a Smile Check on a tooth chart, a chair-time booking planner and a cut-paper kids site. [Live demo](https://template-alba.vercel.app)
+- **[Otherdoor](https://github.com/letsopencals/template-otherdoor)** — an immersive escape-room template (Edinburgh) with two venues and six private rooms that each open onto a different world, booked by team size, plus per-head workshops. [Live demo](https://template-otherdoor.vercel.app)
 
 See all templates and the Storefront API at **[opencals.com/developers](https://opencals.com/developers)**.
 
